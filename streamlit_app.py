@@ -120,7 +120,15 @@ LANG = {
         "tnea_3": "3 abnormalities",
         "tnea_4": "4 abnormalities",
         "tnea_5": "5 abnormalities",
-        "tnea_6": "6+ abnormalities",
+        "tnea_6": "6 abnormalities",
+        "tnea_7": "7 abnormalities",
+        "tnea_8": "8 abnormality",
+        "tnea_9": "9 abnormalities",
+        "tnea_10": "10 abnormalities",
+        "tnea_11": "11 abnormalities",
+        "tnea_12": "12 abnormalities",
+        "tnea_13": "13 abnormalities",
+        "tnea_14": "14 abnormalities"
     },
     "zh": {
         # Navigation
@@ -216,7 +224,15 @@ LANG = {
         "tnea_3": "3项异常",
         "tnea_4": "4项异常",
         "tnea_5": "5项异常",
-        "tnea_6": "6项及以上异常",
+        "tnea_6": "6项异常",
+        "tnea_7": "7项异常",
+        "tnea_8": "8项异常",
+        "tnea_9": "9项异常",
+        "tnea_10": "10项异常",
+        "tnea_11": "11项异常",
+        "tnea_12": "12项异常",
+        "tnea_13": "13项异常",
+        "tnea_14": "14项异常"
     }
 }
 
@@ -509,7 +525,7 @@ if page.startswith("🔮"):
         
         st.markdown(f"##### {T['p1_binary']} ({T['p1_binary_hint']})")
         # Infection - Binary (0/1)
-        infection = st.selectbox(FL["Infection"], [0, 1], format_func=lambda x: T['control'] if x == 0 else T['case'] if lang == "zh" else ("No" if x == 0 else "Yes"))
+        infection = st.selectbox(FL["Infection"], [0, 1], format_func=lambda x: str(x))
     
     with col_right:
         st.markdown(f"##### {T['p1_binary']} ({T['p1_binary_hint']})")
