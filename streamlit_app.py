@@ -16,6 +16,13 @@ warnings.filterwarnings('ignore')
 matplotlib.use('Agg')
 
 # ══════════════════════════════════════════
+#  Fix Chinese font display in matplotlib
+# ══════════════════════════════════════════
+# Set font that supports Chinese characters
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'WenQuanYi Micro Hei', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False  # Fix minus sign display
+
+# ══════════════════════════════════════════
 #  Language Dictionary (i18n)
 # ══════════════════════════════════════════
 LANG = {
@@ -42,6 +49,7 @@ LANG = {
         "p1_continuous": "Continuous Variables",
         "p1_binary": "Binary Variables",
         "p1_binary_hint": "0=No, 1=Yes",
+        "p1_categorical": "Categorical Variables",
         "p1_btn_run": "Run Prediction & SHAP",
         "p1_result_high": "High Risk",
         "p1_result_low": "Low Risk",
@@ -104,6 +112,15 @@ LANG = {
         "language": "Language",
         "en": "English",
         "zh": "中文",
+        
+        # TNEA categories
+        "tnea_0": "0 abnormalities",
+        "tnea_1": "1 abnormality",
+        "tnea_2": "2 abnormalities",
+        "tnea_3": "3 abnormalities",
+        "tnea_4": "4 abnormalities",
+        "tnea_5": "5 abnormalities",
+        "tnea_6": "6+ abnormalities",
     },
     "zh": {
         # Navigation
@@ -128,6 +145,7 @@ LANG = {
         "p1_continuous": "连续变量",
         "p1_binary": "二分类变量",
         "p1_binary_hint": "0=否, 1=是",
+        "p1_categorical": "多分类变量",
         "p1_btn_run": "运行预测与SHAP解释",
         "p1_result_high": "高风险",
         "p1_result_low": "低风险",
@@ -190,6 +208,15 @@ LANG = {
         "language": "语言",
         "en": "English",
         "zh": "中文",
+        
+        # TNEA categories
+        "tnea_0": "0项异常",
+        "tnea_1": "1项异常",
+        "tnea_2": "2项异常",
+        "tnea_3": "3项异常",
+        "tnea_4": "4项异常",
+        "tnea_5": "5项异常",
+        "tnea_6": "6项及以上异常",
     }
 }
 
@@ -203,7 +230,7 @@ FEATURE_LABELS = {
         "Serum Potassium": "Serum Potassium (mmol/L)",
         "CK": "CK (U/L)",
         "MVPG": "MVPG (mmHg)",
-        "Infection": "Infection Score",
+        "Infection": "Infection",
         "Ⅲ-AAD": "III-AAD",
         "Dopamine": "Dopamine Use",
         "APB": "APB (Atrial Premature Beats)",
@@ -222,7 +249,7 @@ FEATURE_LABELS = {
         "Serum Potassium": "血清钾 (mmol/L)",
         "CK": "肌酸激酶 (U/L)",
         "MVPG": "平均跨瓣压差 (mmHg)",
-        "Infection": "感染评分",
+        "Infection": "感染",
         "Ⅲ-AAD": "三度房室传导阻滞",
         "Dopamine": "多巴胺使用",
         "APB": "房性早搏",
@@ -278,13 +305,6 @@ st.markdown("""
 
 .shap-pos { color:#dc2626; font-weight:700; }
 .shap-neg { color:#059669; font-weight:700; }
-
-.lang-select {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    z-index: 999;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -346,7 +366,7 @@ def get_shap_single(explainer, X_row):
     return sv[0] if sv.ndim > 1 else sv
 
 # ══════════════════════════════════════════
-#  Custom Force Plot
+#  Custom Force Plot (with language support)
 # ══════════════════════════════════════════
 def plot_force_plot_matplotlib(base_value, shap_values, features, feature_names, lang="en"):
     sorted_idx = np.argsort(np.abs(shap_values))[::-1]
@@ -360,10 +380,11 @@ def plot_force_plot_matplotlib(base_value, shap_values, features, feature_names,
     bars = ax.barh(y_pos, [shap_values[i] for i in top_idx], 
                    color=colors, height=0.6, alpha=0.85)
     
+    FL = FEATURE_LABELS[lang]
     display_names = []
     for i in top_idx:
         fname = feature_names[i]
-        label = FEATURE_LABELS[lang].get(fname, fname)
+        label = FL.get(fname, fname)
         if len(label) > 35:
             label = label[:32] + "..."
         display_names.append(label)
@@ -385,16 +406,16 @@ def plot_force_plot_matplotlib(base_value, shap_values, features, feature_names,
     
     prediction = base_value + np.sum(shap_values)
     title = 'SHAP Force Plot' if lang == "en" else 'SHAP力图'
-    ax.set_title(f'{title}\nBase: {base_value:.4f} → Prediction: {prediction:.4f}',
+    ax.set_title(f'{title}\nBase: {base_value:.4f} -> Prediction: {prediction:.4f}',
                  fontsize=12, fontweight='bold', pad=15)
     
     from matplotlib.patches import Patch
     if lang == "en":
-        legend_elements = [Patch(facecolor='#ef4444', label='↑ Increases Case risk'),
-                           Patch(facecolor='#10b981', label='↓ Decreases Case risk')]
+        legend_elements = [Patch(facecolor='#ef4444', label='Increases Case risk'),
+                           Patch(facecolor='#10b981', label='Decreases Case risk')]
     else:
-        legend_elements = [Patch(facecolor='#ef4444', label='↑ 增加病例风险'),
-                           Patch(facecolor='#10b981', label='↓ 降低病例风险')]
+        legend_elements = [Patch(facecolor='#ef4444', label='增加病例风险'),
+                           Patch(facecolor='#10b981', label='降低病例风险')]
     ax.legend(handles=legend_elements, loc='lower right', fontsize=9)
     
     ax.spines['top'].set_visible(False)
@@ -461,18 +482,34 @@ if page.startswith("🔮"):
     st.subheader(f"🧪 {T['p1_title']}")
     st.caption(T['p1_desc'])
     
-    col_left, col_right = st.columns(2, gap="large")
+    # Three columns: Continuous, Categorical (TNEA), Binary
+    col_left, col_mid, col_right = st.columns(3, gap="large")
     
     with col_left:
         st.markdown(f"##### {T['p1_continuous']}")
-        tnea = st.number_input(FL["TNEA"], value=0.0, step=0.1)
         aortic = st.number_input(FL["Aortic Annulus"], value=23.0, step=0.1)
         ldh = st.number_input(FL["LDH"], value=250.0, step=1.0)
         myoglobin = st.number_input(FL["Normalized Myoglobin"], value=0.0, step=0.01, format="%.4f")
         potassium = st.number_input(FL["Serum Potassium"], value=4.0, step=0.1)
         ck = st.number_input(FL["CK"], value=100.0, step=1.0)
         mvpg = st.number_input(FL["MVPG"], value=10.0, step=0.1)
-        infection = st.number_input(FL["Infection"], value=0.0, step=0.1)
+    
+    with col_mid:
+        st.markdown(f"##### {T['p1_categorical']}")
+        # TNEA - Categorical (0-6+)
+        tnea_options = {
+            0: T['tnea_0'], 1: T['tnea_1'], 2: T['tnea_2'],
+            3: T['tnea_3'], 4: T['tnea_4'], 5: T['tnea_5'], 6: T['tnea_6']
+        }
+        tnea = st.selectbox(
+            FL["TNEA"],
+            options=list(tnea_options.keys()),
+            format_func=lambda x: tnea_options[x]
+        )
+        
+        st.markdown(f"##### {T['p1_binary']} ({T['p1_binary_hint']})")
+        # Infection - Binary (0/1)
+        infection = st.selectbox(FL["Infection"], [0, 1], format_func=lambda x: T['control'] if x == 0 else T['case'] if lang == "zh" else ("No" if x == 0 else "Yes"))
     
     with col_right:
         st.markdown(f"##### {T['p1_binary']} ({T['p1_binary_hint']})")
