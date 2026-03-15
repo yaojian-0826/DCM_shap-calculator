@@ -18,9 +18,8 @@ matplotlib.use('Agg')
 # ══════════════════════════════════════════
 #  Fix Chinese font display in matplotlib
 # ══════════════════════════════════════════
-# Set font that supports Chinese characters
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'WenQuanYi Micro Hei', 'Arial Unicode MS', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False  # Fix minus sign display
+plt.rcParams['axes.unicode_minus'] = False
 
 # ══════════════════════════════════════════
 #  Language Dictionary (i18n)
@@ -110,25 +109,14 @@ LANG = {
         "control": "Control",
         "built_with": "Built with Streamlit + XGBoost + SHAP",
         "language": "Language",
-        "en": "English",
-        "zh": "中文",
         
-        # TNEA categories
-        "tnea_0": "0 abnormalities",
-        "tnea_1": "1 abnormality",
-        "tnea_2": "2 abnormalities",
-        "tnea_3": "3 abnormalities",
-        "tnea_4": "4 abnormalities",
-        "tnea_5": "5 abnormalities",
-        "tnea_6": "6 abnormalities",
-        "tnea_7": "7 abnormalities",
-        "tnea_8": "8 abnormality",
-        "tnea_9": "9 abnormalities",
-        "tnea_10": "10 abnormalities",
-        "tnea_11": "11 abnormalities",
-        "tnea_12": "12 abnormalities",
-        "tnea_13": "13 abnormalities",
-        "tnea_14": "14 abnormalities"
+        # TNEA
+        "tnea_label": "TNEA (Total ECG Abnormalities)",
+        "tnea_count": "abnormalities",
+        
+        # Infection
+        "infection_no": "0 (No)",
+        "infection_yes": "1 (Yes)",
     },
     "zh": {
         # Navigation
@@ -214,25 +202,14 @@ LANG = {
         "control": "对照组",
         "built_with": "基于 Streamlit + XGBoost + SHAP 构建",
         "language": "语言",
-        "en": "English",
-        "zh": "中文",
         
-        # TNEA categories
-        "tnea_0": "0项异常",
-        "tnea_1": "1项异常",
-        "tnea_2": "2项异常",
-        "tnea_3": "3项异常",
-        "tnea_4": "4项异常",
-        "tnea_5": "5项异常",
-        "tnea_6": "6项异常",
-        "tnea_7": "7项异常",
-        "tnea_8": "8项异常",
-        "tnea_9": "9项异常",
-        "tnea_10": "10项异常",
-        "tnea_11": "11项异常",
-        "tnea_12": "12项异常",
-        "tnea_13": "13项异常",
-        "tnea_14": "14项异常"
+        # TNEA
+        "tnea_label": "TNEA (心电图异常总数)",
+        "tnea_count": "项异常",
+        
+        # Infection
+        "infection_no": "0 (无)",
+        "infection_yes": "1 (有)",
     }
 }
 
@@ -457,8 +434,8 @@ with lang_col2:
         label_visibility="collapsed"
     )
 
-T = LANG[lang]  # Text dictionary
-FL = FEATURE_LABELS[lang]  # Feature labels
+T = LANG[lang]
+FL = FEATURE_LABELS[lang]
 
 # ══════════════════════════════════════════
 #  Header
@@ -498,7 +475,6 @@ if page.startswith("🔮"):
     st.subheader(f"🧪 {T['p1_title']}")
     st.caption(T['p1_desc'])
     
-    # Three columns: Continuous, Categorical (TNEA), Binary
     col_left, col_mid, col_right = st.columns(3, gap="large")
     
     with col_left:
@@ -512,20 +488,23 @@ if page.startswith("🔮"):
     
     with col_mid:
         st.markdown(f"##### {T['p1_categorical']}")
-        # TNEA - Categorical (0-6+)
-        tnea_options = {
-            0: T['tnea_0'], 1: T['tnea_1'], 2: T['tnea_2'],
-            3: T['tnea_3'], 4: T['tnea_4'], 5: T['tnea_5'], 6: T['tnea_6']
-        }
-        tnea = st.selectbox(
+        # TNEA - Categorical (0-14, extendable)
+        tnea = st.number_input(
             FL["TNEA"],
-            options=list(tnea_options.keys()),
-            format_func=lambda x: tnea_options[x]
+            min_value=0,
+            max_value=50,
+            value=0,
+            step=1,
+            help=f"Enter the total number of ECG abnormalities (0-14+)" if lang == "en" else "输入心电图异常总数（0-14项及以上）"
         )
         
-        st.markdown(f"##### {T['p1_binary']} ({T['p1_binary_hint']})")
-        # Infection - Binary (0/1)
-        infection = st.selectbox(FL["Infection"], [0, 1], format_func=lambda x: str(x))
+        st.markdown(f"##### {T['p1_binary']}")
+        # Infection - Binary (0 or 1)
+        infection = st.selectbox(
+            FL["Infection"],
+            [0, 1],
+            format_func=lambda x: T['infection_no'] if x == 0 else T['infection_yes']
+        )
     
     with col_right:
         st.markdown(f"##### {T['p1_binary']} ({T['p1_binary_hint']})")
@@ -603,7 +582,6 @@ if page.startswith("🔮"):
             })
             st.dataframe(feat_display.round(3), use_container_width=True, hide_index=True)
         
-        # SHAP
         st.divider()
         st.subheader(f"🔍 {T['shap_title']}")
         
